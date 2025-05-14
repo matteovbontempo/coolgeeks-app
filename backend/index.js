@@ -1,23 +1,27 @@
+// backend/index.js
+
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(express.json());
 
-// In-memory orders store
+// In-memory stores
 const orders = [];
+const appointments = [];
 
 // Health-check endpoint
 app.get('/api/status', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-// Get all orders
+//
+// ORDERS
+//
 app.get('/api/orders', (req, res) => {
   res.json(orders);
 });
 
-// Place a new order
 app.post('/api/orders', (req, res) => {
   const { item, quantity } = req.body;
   if (!item || typeof quantity !== 'number') {
@@ -27,6 +31,24 @@ app.post('/api/orders', (req, res) => {
   const newOrder = { id, item, quantity, status: 'pending' };
   orders.push(newOrder);
   res.status(201).json(newOrder);
+});
+
+//
+// APPOINTMENTS
+//
+app.get('/api/appointments', (req, res) => {
+  res.json(appointments);
+});
+
+app.post('/api/appointments', (req, res) => {
+  const { client, datetime } = req.body;
+  if (!client || !datetime) {
+    return res.status(400).json({ error: 'Missing client or datetime' });
+  }
+  const id = appointments.length + 1;
+  const newAppt = { id, client, datetime, status: 'scheduled' };
+  appointments.push(newAppt);
+  res.status(201).json(newAppt);
 });
 
 app.listen(PORT, () => {
