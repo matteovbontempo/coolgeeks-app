@@ -51,6 +51,18 @@ app.post('/api/appointments', (req, res) => {
   res.status(201).json(newAppt);
 });
 
+//
+// TRACKING
+//
+app.get('/api/orders/:id/status', (req, res) => {
+  const id = Number(req.params.id);
+  const order = orders.find(o => o.id === id);
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+  res.json({ id: order.id, status: order.status });
+});
+
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
 });
