@@ -1,7 +1,8 @@
-// src/App.jsx
+// frontend/src/App.jsx
 import React from 'react';
 import Orders from './Orders';
 import Appointments from './Appointments';
+import Tracking from './Tracking';
 import './App.css';
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
       <h1 className="text-2xl font-bold mb-4">CoolGeeks Dashboard</h1>
       <Orders />
       <Appointments />
+      <Tracking />
     </div>
   );
 }
