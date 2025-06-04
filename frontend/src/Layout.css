@@ -1,0 +1,39 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.navbar {
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 0.5rem 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.nav-item {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+}
+
+.nav-item.active {
+  color: #0055ff;
+}
+
+.logout {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: #e74c3c;
+}
+
+.content {
+  flex: 1;
+  padding: 2rem;
+  background: #f0f2f5;
+}

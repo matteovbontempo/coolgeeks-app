@@ -1,0 +1,120 @@
+/* Tracking.css */
+
+.tracking-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  margin: 2rem auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  max-width: 800px;
+  text-align: center;
+}
+
+.tracking-card h2 {
+  margin-top: 0;
+  color: #2d3748;
+}
+
+.tracking-card p {
+  margin-bottom: 1.5rem;
+  color: #555;
+}
+
+/* Form */
+.tracking-form {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.tracking-form input {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.tracking-form button {
+  flex: none;
+  padding: 0.75rem 1.5rem;
+  background: #2d3748;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tracking-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.tracking-form button:hover:not(:disabled) {
+  background: #1a202c;
+}
+
+/* Error */
+.tracking-error {
+  color: #e53e3e;
+  margin-bottom: 1rem;
+}
+
+/* Results */
+.tracking-result {
+  text-align: left;
+  margin-top: 1rem;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+}
+
+.tracking-result p {
+  margin: 0.5rem 0;
+}
+
+.tracking-result h3 {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  color: #2d3748;
+}
+
+.tracking-result ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.tracking-result li {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.history-date {
+  flex: 0 0 150px;
+  color: #999;
+}
+
+.history-text {
+  flex: 1;
+  color: #333;
+}
+
+/* Mobile: stack form vertically */
+@media (max-width: 600px) {
+  .tracking-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .tracking-form input,
+  .tracking-form button {
+    width: 100%;
+  }
+}

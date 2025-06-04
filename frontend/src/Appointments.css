@@ -1,0 +1,219 @@
+/* frontend/src/Appointments.css */
+
+/* =======================================
+   Estilos generales para el “page” wrapper
+   ======================================= */
+.page {
+  background: transparent;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* ---------------------------------------
+   Formulario principal de nueva cita
+   (.appointments-form)
+--------------------------------------- */
+.appointments-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.appointments-form select,
+.appointments-form input,
+.appointments-form button {
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.appointments-form select {
+  flex: 1;
+  min-width: 200px;
+}
+
+.appointments-form input[type="datetime-local"] {
+  flex: 1;
+  min-width: 220px;
+}
+
+.appointments-form input[type="text"] {
+  flex: 2;
+  min-width: 240px;
+}
+
+.appointments-form button {
+  flex: none;
+  background: #2d3748;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.appointments-form button:hover:not([disabled]) {
+  background: #1a202c;
+}
+
+.appointments-error {
+  color: #e53e3e;
+  margin-top: 0.5rem;
+}
+
+/* =======================================
+   Lista de citas del usuario
+   (.appointments-list y .appointment-item)
+   ======================================= */
+.appointments-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 800px;
+}
+
+.appointment-item {
+  background: #ffffffdd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  text-align: left;
+  position: relative;
+}
+
+/* Colores según status */
+.status-Pending {
+  border-left: 4px solid #d69e2e; /* ámbar */
+}
+.status-Completed {
+  border-left: 4px solid #2f855a; /* verde */
+}
+.status-Canceled {
+  border-left: 4px solid #e53e3e; /* rojo */
+}
+
+/* Contenido dentro de cada cita cuando NO está en edición */
+.appointments-view p {
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+.status-text {
+  font-weight: bold;
+}
+
+/* Botones de acciones en la vista normal */
+.appointments-actions {
+  margin-top: 0.75rem;
+}
+
+.appointments-actions button {
+  margin-right: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.appointments-actions button:hover:not([disabled]) {
+  background: #e2e8f0;
+}
+
+.appointments-actions button:disabled {
+  background: #edf2f7;
+  color: #a0aec0;
+  cursor: default;
+}
+
+/* =======================================
+   Formulario de edición en línea
+   (.edit-form dentro de .appointment-item)
+   ======================================= */
+.edit-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.edit-form select,
+.edit-form input,
+.edit-form button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.edit-form select {
+  flex: 1;
+  min-width: 150px;
+}
+
+.edit-form input[type="datetime-local"] {
+  flex: 1;
+  min-width: 180px;
+}
+
+.edit-form input[type="text"] {
+  flex: 2;
+  min-width: 200px;
+}
+
+.edit-form button {
+  flex: none;
+  background: #2d3748;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.edit-form button:hover:not([disabled]) {
+  background: #1a202c;
+}
+
+/* =======================================
+   Media Query para pantallas pequeñas (<600px)
+   ======================================= */
+@media (max-width: 600px) {
+  .appointments-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .appointments-form select,
+  .appointments-form input,
+  .appointments-form button {
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+  .appointments-form button {
+    margin-bottom: 0;
+  }
+
+  .appointment-item {
+    padding: 0.8rem;
+  }
+
+  .edit-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .edit-form select,
+  .edit-form input,
+  .edit-form button {
+    width: 100%;
+    margin-bottom: 0.6rem;
+  }
+  .edit-form button {
+    margin-bottom: 0;
+  }
+}

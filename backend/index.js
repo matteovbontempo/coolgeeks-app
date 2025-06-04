@@ -1,68 +1,62 @@
-// backend/index.js
+// Load .env as early as possible
+require('dotenv').config();
 
-const express = require('express');
+const express  = require('express');
+const mongoose = require('mongoose');
+const cors     = require('cors');
+
+const authRoutes              = require('./routes/authRoutes');
+const ordersRoutes            = require('./routes/ordersRoutes');
+const appointmentsRoutes      = require('./routes/appointmentsRoutes');
+const trackingRoutes          = require('./routes/trackingRoutes');
+
+const adminOrdersRoutes       = require('./routes/adminOrdersRoutes');
+const adminAppointmentsRoutes = require('./routes/adminAppointmentsRoutes');
+
 const app = express();
-const PORT = process.env.PORT || 4000;
 
+// --- CORS ---
+// solo permitir el origen de la app React
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
+
+// JSON body parser
 app.use(express.json());
 
-// In-memory stores
-const orders = [];
-const appointments = [];
+// --- MongoDB ---
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser:    true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  });
 
-// Health-check endpoint
-app.get('/api/status', (req, res) => {
-  res.json({ status: 'OK' });
+// --- Rutas de Autenticación ---
+app.use('/api/auth', authRoutes);
+
+// --- Rutas de Usuario Regular ---
+app.use('/api/orders', ordersRoutes);
+app.use('/api/appointments', appointmentsRoutes);
+app.use('/api/tracking', trackingRoutes);
+
+// --- Rutas de Administrador ---
+app.use('/api/admin/orders', adminOrdersRoutes);
+app.use('/api/admin/appointments', adminAppointmentsRoutes);
+
+// --- Global error handler (opcional) ---
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ message: 'Internal server error' });
 });
 
-//
-// ORDERS
-//
-app.get('/api/orders', (req, res) => {
-  res.json(orders);
-});
-
-app.post('/api/orders', (req, res) => {
-  const { item, quantity } = req.body;
-  if (!item || typeof quantity !== 'number') {
-    return res.status(400).json({ error: 'Missing or invalid item/quantity' });
-  }
-  const id = orders.length + 1;
-  const newOrder = { id, item, quantity, status: 'pending' };
-  orders.push(newOrder);
-  res.status(201).json(newOrder);
-});
-
-//
-// APPOINTMENTS
-//
-app.get('/api/appointments', (req, res) => {
-  res.json(appointments);
-});
-
-app.post('/api/appointments', (req, res) => {
-  const { client, datetime } = req.body;
-  if (!client || !datetime) {
-    return res.status(400).json({ error: 'Missing client or datetime' });
-  }
-  const id = appointments.length + 1;
-  const newAppt = { id, client, datetime, status: 'scheduled' };
-  appointments.push(newAppt);
-  res.status(201).json(newAppt);
-});
-
-//
-// TRACKING
-//
-app.get('/api/orders/:id/status', (req, res) => {
-  const id = Number(req.params.id);
-  const order = orders.find(o => o.id === id);
-  if (!order) {
-    return res.status(404).json({ error: 'Order not found' });
-  }
-  res.json({ id: order.id, status: order.status });
-});
-
+// --- Start server ---
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`API running on http://localhost:${PORT}`);
+  console.log(`🚀 API running on http://localhost:${PORT}`);
 });

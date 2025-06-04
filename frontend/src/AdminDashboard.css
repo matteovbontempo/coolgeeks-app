@@ -1,0 +1,43 @@
+/* frontend/src/AdminDashboard.css */
+
+/* ===== Estilos de página ===== */
+.page {
+  background: transparent;
+  padding: 1rem;
+  text-align: center;
+}
+
+.admin-error {
+  color: #e53e3e;
+  margin-bottom: 1rem;
+}
+
+/* ===== Secciones ===== */
+.admin-section {
+  margin-bottom: 2rem;
+}
+
+/* ===== Tablas ===== */
+.admin-table {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.admin-table th {
+  background: #f0f0f0;
+  font-weight: bold;
+}
+
+.admin-table tbody tr:hover {
+  background: #fafafa;
+}

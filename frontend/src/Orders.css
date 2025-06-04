@@ -1,0 +1,156 @@
+/* frontend/src/Orders.css */
+
+.orders-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  max-width: 800px;
+}
+
+.orders-card h2 {
+  margin: 0 0 1rem;
+  border-bottom: 2px solid #2d3748;
+  padding-bottom: 0.5rem;
+  color: #2d3748;
+}
+
+.orders-form {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.orders-form select,
+.orders-form input {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.btn-primary {
+  flex: none;
+  padding: 0.75rem 1.5rem;
+  background: #2d3748;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover:not([disabled]) {
+  background: #1a202c;
+}
+
+.btn-cancel {
+  flex: none;
+  padding: 0.75rem 1.5rem;
+  background: #e53e3e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-cancel:hover:not([disabled]) {
+  background: #c53030;
+}
+
+.orders-error {
+  color: #e53e3e;
+  margin-top: 0.5rem;
+}
+
+.orders-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 2rem;
+  border-top: 1px solid #eee;
+}
+
+.orders-list li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.order-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-info {
+  flex: 1;
+}
+
+.order-info .status-label {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.order-info select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.order-actions button {
+  margin-left: 0.5rem;
+  background: none;
+  border: 1px solid #ccc;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.order-actions button:hover {
+  background: #f5f5f5;
+}
+
+.order-date {
+  font-size: 0.85rem;
+  color: #999;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* Make the tracking number look like a link */
+.link-button {
+  background: none;
+  border: none;
+  color: #0055ff;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .orders-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .orders-form select,
+  .orders-form input,
+  .btn-primary,
+  .btn-cancel {
+    width: 100%;
+  }
+  .order-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .order-actions {
+    margin-top: 0.5rem;
+  }
+}
