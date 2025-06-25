@@ -1,31 +1,47 @@
-import React, { useState }   from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios                  from 'axios';
-import logo                   from './assets/logo.png';  // your logo
-import './Login.css';                              // your existing styles
+import { toast } from 'react-hot-toast';
+import { useAuth } from './AuthContext';
+import logo from './assets/logo.png';
+import './Login.css';
 
 export default function Login() {
-  const [email,   setEmail]   = useState('');
-  const [password,setPassword]= useState('');
-  const [error,   setError]   = useState('');
-  const navigate              = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async e => {
     e.preventDefault();
-    try {
-      const { data } = await axios.post('/api/auth/login', { email, password });
-      localStorage.setItem('token', data.token);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+    setLoading(true);
+    const toastId = toast.loading('Logging in...');
+
+    const result = await login(email, password);
+    
+    if (result.success) {
+      toast.success('Welcome back!', { id: toastId });
+    } else {
+      toast.error(result.message, { id: toastId });
     }
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = '/api/auth/google';
   };
 
   return (
     <div className="auth-card">
-      <img src={logo} alt="CoolGeeks" className="logo" />
-      <h2>Welcome to CoolGeeks</h2>
-
+      <img src={logo} alt="CoolGeeks Logo" className="logo" />
+      <h2>Welcome back!</h2>
       <form onSubmit={handleSubmit} className="auth-form">
         <input
           type="email"
@@ -41,24 +57,20 @@ export default function Login() {
           onChange={e => setPassword(e.target.value)}
           required
         />
-        {error && <p className="error">{error}</p>}
-        <button type="submit" className="btn btn-primary">
-          Log In
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
+      
+      <button onClick={handleGoogleLogin} className="btn btn-google">
+        Continue with Google
+      </button>
 
-      <div className="social-buttons">
-        <a href="/api/auth/google" className="btn btn-google">
-          Continue with Google
-        </a>
-        <a href="/api/auth/apple" className="btn btn-apple">
-          Continue with Apple
-        </a>
+      <div className="auth-links">
+        <Link to="/forgot-password">Forgot Password?</Link>
+        <span className="link-separator">|</span>
+        <Link to="/signup">Sign up here</Link>
       </div>
-
-      <p className="switch-auth">
-        Don't have an account? <Link to="/signup">Sign up here</Link>
-      </p>
     </div>
   );
 }

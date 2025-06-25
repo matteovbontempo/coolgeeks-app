@@ -1,131 +1,129 @@
 // frontend/src/Orders.jsx
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import './Orders.css';
 
 export default function Orders() {
-  const navigate = useNavigate();
+  const [item, setItem]               = useState('RAM Upgrade');
+  const [details, setDetails]         = useState('');
+  const [loadingCreate, setLoadingCreate] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const [item, setItem]         = useState('RAM Upgrade');
-  const [details, setDetails]   = useState('');
   const [orders, setOrders]     = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
-  const [editingId, setEditingId] = useState(null);
+  const [loadingList, setLoadingList] = useState(false);
+  const [errorList, setErrorList]     = useState('');
 
-  // Keep track of previous statuses so we can alert when they change
-  const prevStatuses = useRef({}); // e.g. { orderId1: 'Pending', orderId2: 'Ready for Pickup', ... }
+  // Carrito
+  const [cart, setCart] = useState([]);
 
-  // 1) Fetch all orders from the server
-  const fetchOrders = async () => {
-    try {
-      const res = await axios.get('/api/orders');
-      const fresh = res.data;
-
-      // Check if any order’s status changed since the last fetch
-      fresh.forEach(o => {
-        const prev = prevStatuses.current[o._id];
-        if (prev && prev !== o.status) {
-          // Notify the user with an alert (you can swap in a toast/notification component if you wish)
-          alert(`Order ${o.trackingNumber} status changed to “${o.status}”`);
-        }
-        // Update our stored previous status
-        prevStatuses.current[o._id] = o.status;
-      });
-
-      setOrders(fresh);
-    } catch (err) {
-      console.error('fetchOrders error:', err);
-    }
-  };
-
-  // On mount, load orders and then refetch every 10 seconds
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
-    return () => clearInterval(interval);
   }, []);
 
-  // Reset the form back to “create new order”
-  const resetForm = () => {
-    setItem('RAM Upgrade');
-    setDetails('');
-    setEditingId(null);
-    setError('');
-  };
+  useEffect(() => {
+    if (copied) {
+      toast.success('Copied to clipboard!');
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
 
-  // 2) Create or update: item/details only
-  const handleSubmit = async (e) => {
+  async function fetchOrders() {
+    setLoadingList(true);
+    setErrorList('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('/api/orders', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setOrders(res.data);
+    } catch (err) {
+      console.error(err);
+      setErrorList(err.response?.data?.message || 'Could not load orders.');
+    } finally {
+      setLoadingList(false);
+    }
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopied(true);
+    }
+  }
+
+  function handleAddToCart(e) {
     e.preventDefault();
     if (!details.trim()) {
-      setError('Please add details.');
+      toast.error('Please enter order details.');
       return;
     }
+    setCart([...cart, { item, details }]);
+    setDetails('');
+  }
 
-    setLoading(true);
-    setError('');
+  function handleRemoveFromCart(idx) {
+    setCart(cart.filter((_, i) => i !== idx));
+  }
 
+  async function handleSubmitCart() {
+    if (cart.length === 0) {
+      toast.error('Your cart is empty.');
+      return;
+    }
+    setLoadingCreate(true);
+    const toastId = toast.loading('Placing your order...');
     try {
-      if (editingId) {
-        // Update existing order
-        await axios.patch(`/api/orders/${editingId}`, { item, details });
-      } else {
-        // Create new order (status starts as “Pending” by default)
-        await axios.post('/api/orders', { item, details });
+      const token = localStorage.getItem('token');
+      // Enviar todos los items del carrito como pedidos individuales
+      for (const c of cart) {
+        await axios.post(
+          '/api/orders',
+          { item: c.item, details: c.details },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
       }
-      resetForm();
+      toast.success('All orders placed!', { id: toastId });
+      setCart([]);
       await fetchOrders();
     } catch (err) {
-      console.error('handleSubmit error:', err);
-      setError(editingId ? 'Could not update order.' : 'Could not create order.');
+      console.error(err);
+      const message = err.response?.data?.message || 'Could not place order.';
+      toast.error(message, { id: toastId });
     } finally {
-      setLoading(false);
+      setLoadingCreate(false);
     }
-  };
-
-  // 3) Load an order into the form for editing
-  const handleEdit = (order) => {
-    setItem(order.item);
-    setDetails(order.details);
-    setEditingId(order._id);
-    setError('');
-  };
-
-  // 4) Delete (cancel) an order
-  const handleDelete = async (id) => {
-    if (!window.confirm('Cancel this order?')) return;
-    try {
-      await axios.delete(`/api/orders/${id}`);
-      if (editingId === id) resetForm();
-      await fetchOrders();
-    } catch (err) {
-      console.error('handleDelete error:', err);
-      alert('Could not cancel order.');
-    }
-  };
-
-  // 5) Change status (Pending → Ready for Pickup → Completed)
-  const handleStatusChange = async (orderId, newStatus) => {
-    try {
-      await axios.patch(`/api/orders/${orderId}`, { status: newStatus });
-      await fetchOrders();
-    } catch (err) {
-      console.error('handleStatusChange error:', err);
-      alert('Could not update status.');
-    }
-  };
+  }
 
   return (
     <div className="orders-card">
       <h2>Your Orders</h2>
 
-      <form className="orders-form" onSubmit={handleSubmit}>
-        <select value={item} onChange={e => setItem(e.target.value)}>
-          <option>RAM Upgrade</option>
-          <option>SSD Installation</option>
-          <option>Screen Repair</option>
-          <option>New Peripherals</option>
+      <form className="orders-form" onSubmit={handleAddToCart}>
+        <select
+          value={item}
+          onChange={e => setItem(e.target.value)}
+          disabled={loadingCreate}
+        >
+          <option value="Screen Repair">Screen Repair</option>
+          <option value="RAM Upgrade">RAM Upgrade</option>
+          <option value="Virus/Malware Removal">
+            Virus / Malware Removal
+          </option>
+          <option value="New Computer Install">
+            New Computer Installation
+          </option>
+          <option value="Other">Other Service</option>
         </select>
 
         <input
@@ -133,70 +131,82 @@ export default function Orders() {
           placeholder="Details (model, notes…) *"
           value={details}
           onChange={e => setDetails(e.target.value)}
-          disabled={loading}
+          disabled={loadingCreate}
         />
 
-        <button type="submit" className="btn-primary" disabled={loading}>
-          {loading
-            ? (editingId ? 'Saving…' : 'Placing…')
-            : (editingId ? 'Save' : 'Place Order')}
+        <button
+          type="submit"
+          className="btn-primary"
+          disabled={loadingCreate}
+        >
+          Add to Cart
         </button>
-
-        {editingId && (
-          <button
-            type="button"
-            className="btn-cancel"
-            onClick={resetForm}
-            disabled={loading}
-          >
-            Cancel
-          </button>
-        )}
       </form>
 
-      {error && <p className="orders-error">{error}</p>}
+      {/* Carrito */}
+      {cart.length > 0 && (
+        <div className="cart-section">
+          <h3>Your Cart</h3>
+          <ul className="cart-list">
+            {cart.map((c, idx) => (
+              <li key={idx} className="cart-item">
+                <span><strong>{c.item}</strong> — {c.details}</span>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => handleRemoveFromCart(idx)}
+                  style={{ marginLeft: 8 }}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button
+            className="btn-primary"
+            onClick={handleSubmitCart}
+            disabled={loadingCreate}
+            style={{ marginTop: 8 }}
+          >
+            Confirm Order ({cart.length})
+          </button>
+        </div>
+      )}
 
-      {orders.length > 0 && (
+      {loadingList ? (
+        <div className="loading-container">
+          <span className="loading-spinner"></span>
+          <p>Loading orders…</p>
+        </div>
+      ) : errorList ? (
+        <p className="orders-error">{errorList}</p>
+      ) : (
         <ul className="orders-list">
           {orders.map(o => (
-            <li key={o._id}>
+            <li key={o._id} className="order-item">
               <div className="order-main">
                 <div className="order-info">
                   <strong>{o.item}</strong> — {o.details}
-                  <br/>
-                  <small>
-                    Tracking #:&nbsp;
+                  <br />
+                  <div className="tracking-section">
+                    <small>Tracking #: {o.trackingNumber}</small>
                     <button
-                      className="link-button"
-                      onClick={() => navigate(`/tracking?number=${o.trackingNumber}`)}
+                      type="button"
+                      className="copy-tracking-btn"
+                      onClick={() => copyToClipboard(o.trackingNumber)}
+                      title="Copy tracking number"
                     >
-                      {o.trackingNumber}
+                      Copy
                     </button>
-                  </small>
-                  <br/>
-
-                  {/* Show and allow changing English‐only status */}
-                  <label className="status-label">
-                    Status:&nbsp;
-                    <select
-                      value={o.status}
-                      onChange={e => handleStatusChange(o._id, e.target.value)}
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Ready for Pickup">Ready for Pickup</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  </label>
-                </div>
-
-                <div className="order-actions">
-                  <button onClick={() => handleEdit(o)}>Edit</button>
-                  <button onClick={() => handleDelete(o._id)}>Delete</button>
+                  </div>
+                  <br />
+                  <span className="order-date">
+                    {new Date(o.createdAt).toLocaleString()}
+                  </span>
+                  <br />
+                  <span className="status-label">Status: {o.status}</span>
                 </div>
               </div>
-              <span className="order-date">
-                {new Date(o.createdAt).toLocaleString()}
-              </span>
             </li>
           ))}
         </ul>

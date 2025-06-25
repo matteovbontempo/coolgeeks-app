@@ -1,5 +1,8 @@
 /* frontend/src/Orders.css */
 
+/* =========================================
+   Wrapper de Orders
+   ========================================= */
 .orders-card {
   background: #fff;
   border-radius: 8px;
@@ -16,11 +19,15 @@
   color: #2d3748;
 }
 
+/* =========================================
+   Formulario de nueva orden
+   ========================================= */
 .orders-form {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
   align-items: center;
+  margin-bottom: 1.5rem;
 }
 
 .orders-form select,
@@ -32,41 +39,201 @@
   border-radius: 4px;
 }
 
-.btn-primary {
+/* ================================
+   Botón primario — igual que citas
+   ================================ */
+/* Le damos prioridad dentro de orders-form */
+.orders-form .btn-primary {
   flex: none;
   padding: 0.75rem 1.5rem;
-  background: #2d3748;
-  color: #fff;
+  background: #2d3748 !important;
+  color: #fff !important;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 0.9rem;
   transition: background 0.2s;
 }
-
-.btn-primary:hover:not([disabled]) {
-  background: #1a202c;
+.orders-form .btn-primary:hover:not([disabled]) {
+  background: #1a202c !important;
+}
+.orders-form .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
-.btn-cancel {
-  flex: none;
-  padding: 0.75rem 1.5rem;
-  background: #e53e3e;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-cancel:hover:not([disabled]) {
-  background: #c53030;
-}
-
+/* =========================================
+   Errores y lista de órdenes
+   ========================================= */
 .orders-error {
   color: #e53e3e;
   margin-top: 0.5rem;
 }
 
+.orders-success {
+  color: #2f855a;
+  background: #f0fff4;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+  border-left: 4px solid #2f855a;
+}
+
+/* =========================================
+   Success container and tracking copy
+   ========================================= */
+.success-container {
+  margin: 1rem 0;
+}
+
+.tracking-copy-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #f7fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.tracking-display {
+  flex: 1;
+  font-size: 0.95rem;
+  color: #2d3748;
+}
+
+.copy-button-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.copy-button-small:hover:not([disabled]) {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.copy-button-small:active:not([disabled]) {
+  transform: scale(0.95);
+}
+
+.copy-button-small.copied {
+  background: linear-gradient(135deg, #2f855a 0%, #38a169 100%);
+  cursor: default;
+}
+
+.copy-button-small:disabled {
+  opacity: 0.8;
+  cursor: default;
+}
+
+/* =========================================
+   Tracking row in order list
+   ========================================= */
+.tracking-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+.copy-tracking-btn-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.copy-tracking-btn-small:hover {
+  opacity: 1;
+  background: rgba(102, 126, 234, 0.1);
+  transform: scale(1.1);
+}
+
+.copy-tracking-btn-small:active {
+  transform: scale(0.95);
+}
+
+/* =========================================
+   Tracking section in order list
+   ========================================= */
+.tracking-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+  flex-wrap: wrap;
+}
+
+.copy-tracking-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  opacity: 0.9;
+  flex-shrink: 0;
+  min-height: 28px;
+}
+
+.copy-tracking-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.copy-tracking-btn:active {
+  transform: translateY(0);
+}
+
+/* =========================================
+   Loading container
+   ========================================= */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+}
+
+.loading-container p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* =========================================
+   Errores y lista de órdenes
+   ========================================= */
 .orders-list {
   list-style: none;
   padding: 0;
@@ -88,53 +255,21 @@
 .order-info {
   flex: 1;
 }
-
+.order-info .order-date {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #999;
+}
 .order-info .status-label {
   display: block;
   margin-top: 0.5rem;
   font-size: 0.9rem;
 }
 
-.order-info select {
-  padding: 0.3rem 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.order-actions button {
-  margin-left: 0.5rem;
-  background: none;
-  border: 1px solid #ccc;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.order-actions button:hover {
-  background: #f5f5f5;
-}
-
-.order-date {
-  font-size: 0.85rem;
-  color: #999;
-  display: block;
-  margin-top: 0.25rem;
-}
-
-/* Make the tracking number look like a link */
-.link-button {
-  background: none;
-  border: none;
-  color: #0055ff;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 0;
-  font: inherit;
-}
-
-/* Mobile adjustments */
+/* =========================================
+   Responsive
+   ========================================= */
 @media (max-width: 600px) {
   .orders-form {
     flex-direction: column;
@@ -142,15 +277,52 @@
   }
   .orders-form select,
   .orders-form input,
-  .btn-primary,
-  .btn-cancel {
+  .orders-form .btn-primary {
     width: 100%;
   }
   .order-main {
     flex-direction: column;
     align-items: flex-start;
   }
-  .order-actions {
-    margin-top: 0.5rem;
+  
+  .tracking-copy-section {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .copy-button-small {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+  
+  .tracking-row {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .copy-tracking-btn-small {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .copy-button-small,
+  .copy-tracking-btn-small {
+    touch-action: manipulation;
+  }
+  
+  .copy-button-small {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .copy-tracking-btn-small {
+    width: 28px;
+    height: 28px;
   }
 }

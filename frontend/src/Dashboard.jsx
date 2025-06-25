@@ -2,21 +2,33 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import './Dashboard.css'; // ← Importa los estilos de Dashboard
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { search } = useLocation();
   const [user, setUser] = useState({ name: '', email: '' });
 
-  // fetch profile
   useEffect(() => {
+    // 1) Si vengo con ?token=XYZ lo guardo en localStorage
+    const params = new URLSearchParams(search);
+    const tokenFromGoogle = params.get('token');
+    if (tokenFromGoogle) {
+      localStorage.setItem('token', tokenFromGoogle);
+
+      // Quitar el ?token=XYZ de la URL
+      navigate('/dashboard', { replace: true });
+      return; // salimos aquí para que el siguiente efecto no corra con search todavía
+    }
+
+    // 2) Validar que ya tengamos un token, si no, vuelvo a /login
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
     }
 
+    // 3) Fetch del perfil
     axios
       .get('/api/auth/dashboard', {
         headers: { Authorization: `Bearer ${token}` },
@@ -25,13 +37,15 @@ export default function Dashboard() {
         setUser(res.data.data);
       })
       .catch(() => {
+        // Si algo falla, limpiar y volver a login
+        localStorage.removeItem('token');
         navigate('/login');
       });
-  }, [navigate]);
+  }, [search, navigate]);
 
   return (
     <div className="dashboard-container">
-      <div className="welcome-card">
+      <div className="orders-card">
         <h2>Welcome to CoolGeeks, {user.name}!</h2>
         <p>
           Here at CoolGeeks we make it effortless to manage your tech life:

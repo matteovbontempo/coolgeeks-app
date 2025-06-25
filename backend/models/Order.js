@@ -1,11 +1,10 @@
 // backend/models/Order.js
-
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref:   'User',
+    type:     mongoose.Schema.Types.ObjectId,
+    ref:      'User',
     required: true
   },
   item: {
@@ -22,10 +21,12 @@ const orderSchema = new mongoose.Schema({
     unique:   true
   },
   status: {
-    type: String,
-    enum: ['Pending', 'Ready for Pickup', 'Completed'],
+    type:    String,
+    enum:    ['Pending', 'Shipped', 'Delivered', 'Ready for Pickup', 'Completed', 'Cancelled'],
     default: 'Pending'
   }
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
 module.exports = mongoose.model('Order', orderSchema);

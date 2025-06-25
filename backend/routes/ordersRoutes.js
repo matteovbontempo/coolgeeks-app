@@ -1,28 +1,23 @@
 // backend/routes/ordersRoutes.js
-
-const express = require('express');
-const router  = express.Router();
-
+const router = require('express').Router();
 const {
-  createOrder,
   listUserOrders,
+  createOrder,
   updateOrder,
   deleteOrder
 } = require('../controllers/orderController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Todas estas rutas requieren autenticación (protect)
+router.use(protect);
 
-// POST   /api/orders        → crear orden del usuario logueado
-router.post('/', protect, createOrder);
+router
+  .route('/')
+  .get(listUserOrders)
+  .post(createOrder);
 
-// GET    /api/orders        → listar solo las órdenes de este usuario
-router.get('/', protect, listUserOrders);
-
-// PATCH  /api/orders/:id    → editar un campo de la orden
-router.patch('/:id', protect, updateOrder);
-
-// DELETE /api/orders/:id    → cancelar (borrar) una orden
-router.delete('/:id', protect, deleteOrder);
+router
+  .route('/:id')
+  .patch(updateOrder)
+  .delete(deleteOrder);
 
 module.exports = router;

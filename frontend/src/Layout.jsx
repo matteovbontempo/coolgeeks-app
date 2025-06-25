@@ -1,93 +1,90 @@
 // frontend/src/Layout.jsx
 
-import React, { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './Layout.css'; // ← Importa los estilos de la barra de navegación
+import React, { useState } from 'react';
+import { NavLink, Outlet } from 'react-router-dom';
+import { useAuth } from './AuthContext';
+import './Layout.css';
 
 export default function Layout() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);   // { name, email, isAdmin }
-  const [loading, setLoading] = useState(true);
+    const { user, logout, isMobile } = useAuth();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Al montarse, obtenemos el perfil para saber si el usuario es admin
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+    const getLinkText = (desktop, mobile) => {
+        return isMobile ? mobile : desktop;
+    };
 
-    axios
-      .get('/api/auth/dashboard', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => {
-        setUser(res.data.data);
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-        navigate('/login');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [navigate]);
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
+    const closeMenu = () => {
+        setIsMenuOpen(false);
+    };
 
-  if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading…</div>;
-  }
+    return (
+        <>
+            <header className="navbar">
+                {/* Hamburger Menu Button for Mobile */}
+                <button className="hamburger-menu" onClick={toggleMenu}>
+                    <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+                    <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+                    <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+                </button>
 
-  return (
-    <>
-      <header className="navbar">
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
-        >
-          Home
-        </NavLink>
-        <NavLink
-          to="/orders"
-          className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
-        >
-          Orders
-        </NavLink>
-        <NavLink
-          to="/appointments"
-          className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
-        >
-          Appointments
-        </NavLink>
-        <NavLink
-          to="/tracking"
-          className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
-        >
-          Tracking
-        </NavLink>
-
-        {user?.isAdmin && (
-          <NavLink
-            to="/admin"
-            className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
-          >
-            Admin
-          </NavLink>
-        )}
-
-        <button className="nav-item logout" onClick={handleLogout}>
-          Log Out
-        </button>
-      </header>
-
-      <main className="content">
-        <Outlet />
-      </main>
-    </>
-  );
+                {/* Navigation Links */}
+                <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
+                    <NavLink 
+                        to="/dashboard" 
+                        className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                        onClick={closeMenu}
+                    >
+                        {getLinkText('Home', 'Home')}
+                    </NavLink>
+                    <NavLink 
+                        to="/orders" 
+                        className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                        onClick={closeMenu}
+                    >
+                        {getLinkText('Orders', 'Orders')}
+                    </NavLink>
+                    <NavLink 
+                        to="/appointments" 
+                        className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                        onClick={closeMenu}
+                    >
+                        {getLinkText('Appointments', 'Appts')}
+                    </NavLink>
+                    <NavLink 
+                        to="/tracking" 
+                        className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                        onClick={closeMenu}
+                    >
+                        {getLinkText('Tracking', 'Track')}
+                    </NavLink>
+                    <NavLink 
+                        to="/profile" 
+                        className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                        onClick={closeMenu}
+                    >
+                        {getLinkText('Profile', 'Profile')}
+                    </NavLink>
+                    {user?.isAdmin && (
+                        <NavLink 
+                            to="/admin" 
+                            className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                            onClick={closeMenu}
+                        >
+                            {getLinkText('Admin', 'Admin')}
+                        </NavLink>
+                    )}
+                    <button className="nav-item logout" onClick={logout}>
+                        {getLinkText('Log Out', 'Logout')}
+                    </button>
+                </div>
+            </header>
+            <main className="content">
+                <Outlet />
+            </main>
+        </>
+    );
 }

@@ -1,13 +1,14 @@
 // backend/controllers/orderController.js
-
 const Order = require('../models/Order');
-const { v4: uuidv4 } = require('uuid');
+const { customAlphabet } = require('nanoid');
+// generate 8 uppercase alphanumerics
+const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8);
 
-// 1) Listar TODAS las órdenes (para Admin)
+// — List all orders (admin)
 async function listOrders(req, res) {
   try {
     const orders = await Order.find()
-      .populate('userId', 'name email') // Incluye nombre y email del usuario
+      .populate('userId','name email')
       .sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
@@ -16,11 +17,11 @@ async function listOrders(req, res) {
   }
 }
 
-// 2) Listar solo las órdenes del usuario autenticado
+// — List only the current user’s orders
 async function listUserOrders(req, res) {
   try {
-    const userId = req.userId;
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+    const orders = await Order.find({ userId: req.userId })
+      .sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     console.error('listUserOrders error:', err);
@@ -28,14 +29,23 @@ async function listUserOrders(req, res) {
   }
 }
 
-// 3) Crear nueva orden (asocia userId)
+// — Create a new order
 async function createOrder(req, res) {
   try {
     const { item, details } = req.body;
-    const userId = req.userId; // Viene del middleware protect()
+    if (!item || !details) {
+      return res.status(400).json({ message: 'Item and details are required.' });
+    }
 
-    const trackingNumber = uuidv4().split('-')[0].toUpperCase();
-    const order = await Order.create({ userId, item, details, trackingNumber });
+    const trackingNumber = nanoid();
+    const order = await Order.create({
+      userId: req.userId,
+      item,
+      details,
+      trackingNumber
+    });
+
+    // returns { ..., trackingNumber: "A1B2C3D4", ... }
     res.status(201).json(order);
   } catch (err) {
     console.error('createOrder error:', err);
@@ -43,24 +53,20 @@ async function createOrder(req, res) {
   }
 }
 
-// 4) Actualizar (editar) una orden
+// — Update an existing order (item/details/status)
 async function updateOrder(req, res) {
   try {
     const { id } = req.params;
     const updateData = {};
-
-    if (req.body.item !== undefined)    updateData.item = req.body.item;
+    if (req.body.item    !== undefined) updateData.item    = req.body.item;
     if (req.body.details !== undefined) updateData.details = req.body.details;
-    if (req.body.status !== undefined)  updateData.status = req.body.status;
+    if (req.body.status  !== undefined) updateData.status  = req.body.status;
 
-    const order = await Order.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found.' });
-    }
+    const order = await Order.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true
+    });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
     res.json(order);
   } catch (err) {
     console.error('updateOrder error:', err);
@@ -68,18 +74,32 @@ async function updateOrder(req, res) {
   }
 }
 
-// 5) Eliminar (cancelar) una orden
+// — Delete (cancel) an order
 async function deleteOrder(req, res) {
   try {
     const { id } = req.params;
     const order = await Order.findByIdAndDelete(id);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found.' });
-    }
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
     res.json({ message: 'Order canceled.' });
   } catch (err) {
     console.error('deleteOrder error:', err);
-    res.status(500).json({ message: 'Could not delete order.' });
+    res.status(500).json({ message: 'Could not cancel order.' });
+  }
+}
+
+// — Update only the status (admin)
+async function updateOrderStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    order.status = status;
+    await order.save();
+    res.json({ message: 'Order status updated.', order });
+  } catch (err) {
+    console.error('updateOrderStatus error:', err);
+    res.status(500).json({ message: 'Could not update status.' });
   }
 }
 
@@ -88,5 +108,6 @@ module.exports = {
   listUserOrders,
   createOrder,
   updateOrder,
-  deleteOrder
+  deleteOrder,
+  updateOrderStatus
 };

@@ -1,5 +1,3 @@
-// frontend/src/AdminDashboard.jsx
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -8,9 +6,12 @@ import './AdminDashboard.css';
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
-  const [appts, setAppts]   = useState([]);
+  const [appts, setAppts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState('');
+  const [error, setError] = useState('');
+  const [adminActionError, setAdminActionError] = useState('');
+  const [orderDateFilter, setOrderDateFilter] = useState('all');
+  const [apptDateFilter, setApptDateFilter] = useState('all');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -19,14 +20,9 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Llamadas simultáneas a /api/admin/orders y /api/admin/appointments
     Promise.all([
-      axios.get('/api/admin/orders', {
-        headers: { Authorization: `Bearer ${token}` }
-      }),
-      axios.get('/api/admin/appointments', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      axios.get('/api/admin/orders', { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get('/api/admin/appointments', { headers: { Authorization: `Bearer ${token}` } })
     ])
       .then(([ordersRes, apptsRes]) => {
         setOrders(ordersRes.data);
@@ -34,7 +30,7 @@ export default function AdminDashboard() {
       })
       .catch(err => {
         console.error('Admin fetch error:', err.response?.data || err.message);
-        if (err.response?.status === 403 || err.response?.status === 401) {
+        if ([401, 403].includes(err.response?.status)) {
           navigate('/dashboard');
         } else {
           setError(err.response?.data?.message || 'Error fetching admin data');
@@ -43,93 +39,267 @@ export default function AdminDashboard() {
       .finally(() => setLoading(false));
   }, [navigate]);
 
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `/api/admin/orders/${orderId}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setOrders(prev => prev.map(o => (o._id === orderId ? { ...o, status: newStatus } : o)));
+      setAdminActionError('');
+    } catch (err) {
+      console.error('Failed to update order status:', err.response?.data || err.message);
+      setAdminActionError('Failed to update order status');
+    }
+  };
+
+  const updateApptStatus = async (apptId, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `/api/admin/appointments/${apptId}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAppts(prev => prev.map(a => (a._id === apptId ? { ...a, status: newStatus } : a)));
+      setAdminActionError('');
+    } catch (err) {
+      console.error('Failed to update appointment status:', err.response?.data || err.message);
+      setAdminActionError('Failed to update appointment status');
+    }
+  };
+
+  // Eliminar orden
+  const deleteOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`/api/admin/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setOrders(prev => prev.filter(o => o._id !== orderId));
+      setAdminActionError('');
+    } catch (err) {
+      console.error('Failed to delete order:', err.response?.data || err.message);
+      setAdminActionError('Failed to delete order');
+    }
+  };
+
+  // Eliminar cita
+  const deleteAppt = async (apptId) => {
+    if (!window.confirm('Are you sure you want to delete this appointment?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`/api/admin/appointments/${apptId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAppts(prev => prev.filter(a => a._id !== apptId));
+      setAdminActionError('');
+    } catch (err) {
+      console.error('Failed to delete appointment:', err.response?.data || err.message);
+      setAdminActionError('Failed to delete appointment');
+    }
+  };
+
+  function filterOrdersByDate(order) {
+    const now = new Date();
+    const created = new Date(order.createdAt);
+    switch (orderDateFilter) {
+      case 'today':
+        return created.toDateString() === now.toDateString();
+      case 'this_week': {
+        const firstDay = new Date(now);
+        firstDay.setDate(now.getDate() - now.getDay());
+        const lastDay = new Date(firstDay);
+        lastDay.setDate(firstDay.getDate() + 6);
+        return created >= firstDay && created <= lastDay;
+      }
+      case 'this_month':
+        return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+      case 'last_month': {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return created.getMonth() === lastMonth.getMonth() && created.getFullYear() === lastMonth.getFullYear();
+      }
+      default:
+        return true;
+    }
+  }
+
+  function filterApptsByDate(appt) {
+    const now = new Date();
+    const created = new Date(appt.createdAt);
+    switch (apptDateFilter) {
+      case 'today':
+        return created.toDateString() === now.toDateString();
+      case 'this_week': {
+        const firstDay = new Date(now);
+        firstDay.setDate(now.getDate() - now.getDay());
+        const lastDay = new Date(firstDay);
+        lastDay.setDate(firstDay.getDate() + 6);
+        return created >= firstDay && created <= lastDay;
+      }
+      case 'this_month':
+        return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+      case 'last_month': {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return created.getMonth() === lastMonth.getMonth() && created.getFullYear() === lastMonth.getFullYear();
+      }
+      default:
+        return true;
+    }
+  }
+
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading…</div>;
   }
 
   return (
-    <div className="page">
-      <h2>Admin Dashboard</h2>
+    <div
+      className="page"
+      style={{
+        margin: 0,
+        padding: '1rem',
+        width: '100%',
+        maxWidth: 'none',
+        boxSizing: 'border-box',
+        background: '#fff'
+      }}
+    >
+      <h2 style={{ textAlign: 'center' }}>Admin Dashboard</h2>
       {error && <p className="admin-error">{error}</p>}
+      {adminActionError && <p className="admin-error">{adminActionError}</p>}
 
-      {/* ======= TABLA DE ÓRDENES ======= */}
       <section className="admin-section">
         <h3>All Orders</h3>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>User (Name / Email)</th>
-              <th>Item</th>
-              <th>Details</th>
-              <th>Tracking #</th>
-              <th>Status</th>
-              <th>Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map(o => (
-              <tr key={o._id}>
-                <td>{o._id}</td>
-                <td>
-                  {o.userId
-                    ? `${o.userId.name} / ${o.userId.email}`
-                    : '—'}
-                </td>
-                <td>{o.item}</td>
-                <td>{o.details}</td>
-                <td>{o.trackingNumber}</td>
-                <td>{o.status}</td>
-                <td>{new Date(o.createdAt).toLocaleString()}</td>
-              </tr>
-            ))}
-            {orders.length === 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <label htmlFor="order-date-filter" style={{ marginRight: 8 }}>Filter by date:</label>
+          <select
+            id="order-date-filter"
+            value={orderDateFilter}
+            onChange={e => setOrderDateFilter(e.target.value)}
+            style={{ padding: '0.3rem 0.7rem', borderRadius: 4 }}
+          >
+            <option value="all">All</option>
+            <option value="today">Today</option>
+            <option value="this_week">This week</option>
+            <option value="this_month">This month</option>
+            <option value="last_month">Last month</option>
+          </select>
+        </div>
+        <div className="table-wrapper">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center' }}>
-                  No orders found.
-                </td>
+                <th>Order ID</th>
+                <th>User (Name / Email)</th>
+                <th>Item</th>
+                <th>Details</th>
+                <th>Tracking #</th>
+                <th>Status</th>
+                <th>Actions</th>
+                <th>Created At</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.filter(filterOrdersByDate).map(o => (
+                <tr key={o._id}>
+                  <td>{o._id}</td>
+                  <td>{o.userId ? `${o.userId.name} / ${o.userId.email}` : '—'}</td>
+                  <td>{o.item}</td>
+                  <td>{o.details}</td>
+                  <td>{o.trackingNumber}</td>
+                  <td>{o.status}</td>
+                  <td>
+                    <select
+                      value={o.status}
+                      onChange={e => updateOrderStatus(o._id, e.target.value)}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Shipped">Shipped</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                    <button
+                      style={{ marginLeft: 8, color: '#fff', background: '#e53e3e', border: 'none', borderRadius: 4, padding: '0.3rem 0.7rem', cursor: 'pointer' }}
+                      onClick={() => deleteOrder(o._id)}
+                      title="Delete order"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                  <td>{new Date(o.createdAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      {/* ======= TABLA DE CITAS ======= */}
       <section className="admin-section">
         <h3>All Appointments</h3>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Appt ID</th>
-              <th>User ID</th>
-              <th>Service</th>
-              <th>Date & Time</th>
-              <th>Note</th>
-              <th>Status</th>
-              <th>Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appts.map(a => (
-              <tr key={a._id}>
-                <td>{a._id}</td>
-                <td>{a.userId}</td>
-                <td>{a.service}</td>
-                <td>{new Date(a.when).toLocaleString()}</td>
-                <td>{a.note || '—'}</td>
-                <td>{a.status}</td>
-                <td>{new Date(a.createdAt).toLocaleString()}</td>
-              </tr>
-            ))}
-            {appts.length === 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <label htmlFor="appt-date-filter" style={{ marginRight: 8 }}>Filter by date:</label>
+          <select
+            id="appt-date-filter"
+            value={apptDateFilter}
+            onChange={e => setApptDateFilter(e.target.value)}
+            style={{ padding: '0.3rem 0.7rem', borderRadius: 4 }}
+          >
+            <option value="all">All</option>
+            <option value="today">Today</option>
+            <option value="this_week">This week</option>
+            <option value="this_month">This month</option>
+            <option value="last_month">Last month</option>
+          </select>
+        </div>
+        <div className="table-wrapper">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center' }}>
-                  No appointments found.
-                </td>
+                <th>Appt ID</th>
+                <th>User ID</th>
+                <th>Service</th>
+                <th>Date & Time</th>
+                <th>Note</th>
+                <th>Status</th>
+                <th>Actions</th>
+                <th>Created At</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {appts.filter(filterApptsByDate).map(a => (
+                <tr key={a._id}>
+                  <td>{a._id}</td>
+                  <td>{a.userId}</td>
+                  <td>{a.service}</td>
+                  <td>{new Date(a.when).toLocaleString()}</td>
+                  <td>{a.note || '—'}</td>
+                  <td>{a.status}</td>
+                  <td>
+                    <select
+                      value={a.status}
+                      onChange={e => updateApptStatus(a._id, e.target.value)}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                    <button
+                      style={{ marginLeft: 8, color: '#fff', background: '#e53e3e', border: 'none', borderRadius: 4, padding: '0.3rem 0.7rem', cursor: 'pointer' }}
+                      onClick={() => deleteAppt(a._id)}
+                      title="Delete appointment"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                  <td>{new Date(a.createdAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

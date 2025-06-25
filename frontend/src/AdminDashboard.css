@@ -2,26 +2,38 @@
 
 /* ===== Estilos de página ===== */
 .page {
-  background: transparent;
+  position: relative;
+  width: 100vw;                           /* panel spans viewport */
+  max-width: none;                        /* ignore any parent max */
+  margin-left: calc(50% - 50vw);          /* pull left by half the extra */
+  margin-right: calc(50% - 50vw);         /* pull right by half the extra */
   padding: 1rem;
-  text-align: center;
-}
-
-.admin-error {
-  color: #e53e3e;
-  margin-bottom: 1rem;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 0;                       /* square corners */
 }
 
 /* ===== Secciones ===== */
 .admin-section {
+  width: 100% !important;
   margin-bottom: 2rem;
+  /* let the inner wrapper scroll, not swallow clicks */
+  overflow: visible !important;
+}
+
+/* ===== Wrapper que envuelve la tabla ===== */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  /* ensure children receive pointer events */
+  pointer-events: auto;
 }
 
 /* ===== Tablas ===== */
 .admin-table {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
   border-collapse: collapse;
 }
 
@@ -31,6 +43,7 @@
   border: 1px solid #ccc;
   font-size: 0.9rem;
   text-align: left;
+  background: #fff;
 }
 
 .admin-table th {
@@ -40,4 +53,26 @@
 
 .admin-table tbody tr:hover {
   background: #fafafa;
+}
+
+/* keep header visible on scroll */
+.admin-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f0f0f0;
+  z-index: 1;
+}
+
+/* frontend/src/AdminDashboard.css */
+
+/* Increase space between section title and its table */
+.admin-section h3 {
+  margin-bottom: 1.5rem;  /* was 0.75rem, now doubled */
+  margin-top: 1.5rem;
+}
+
+/* Increase space between each section */
+.admin-section {
+  margin-bottom: 4rem;    /* was 3rem, now a bit more */
+  margin-top: 4rem;
 }
