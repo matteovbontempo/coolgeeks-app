@@ -26,6 +26,8 @@ export default function Orders() {
   const [showPayment, setShowPayment] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [cashNote, setCashNote] = useState('');
+  const [modalNote, setModalNote] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -39,6 +41,11 @@ export default function Orders() {
       return () => clearTimeout(timer);
     }
   }, [copied]);
+
+  // Debug: log paymentMethod
+  useEffect(() => {
+    console.log('paymentMethod:', paymentMethod);
+  }, [paymentMethod]);
 
   async function fetchOrders() {
     setLoadingList(true);
@@ -148,15 +155,31 @@ export default function Orders() {
       const token = localStorage.getItem('token');
       await axios.post(
         '/api/orders/pay-cash',
-        { orderId: selectedOrder._id },
+        { orderId: selectedOrder._id, note: cashNote },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Pedido registrado para pago en efectivo');
       handlePaymentSuccess();
+      setCashNote('');
     } catch (error) {
       toast.error('Error al registrar pago en efectivo');
     }
   };
+
+  function handleCancelOrder(orderId) {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    const token = localStorage.getItem('token');
+    axios.delete(`/api/orders/${orderId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(() => {
+        toast.success('Order cancelled');
+        fetchOrders();
+      })
+      .catch(() => {
+        toast.error('Could not cancel order');
+      });
+  }
 
   if (showPayment && selectedOrder) {
     return (
@@ -187,22 +210,66 @@ export default function Orders() {
           </Elements>
         )}
         {paymentMethod === 'cash' && (
-          <div style={{ textAlign: 'center' }}>
-            <button
-              className="btn-primary"
-              style={{ marginTop: 24, minWidth: 200 }}
-              onClick={handleCashPayment}
-            >
-              Confirm cash payment
-            </button>
-            <button
-              className="btn-secondary"
-              style={{ marginTop: 12, minWidth: 200 }}
-              onClick={handlePaymentCancel}
-            >
-              Cancel
-            </button>
-          </div>
+          <>
+            <div className="cash-info-box" style={{
+              background: '#fffbe6',
+              border: '1.5px solid #ffe58f',
+              borderRadius: 10,
+              padding: 18,
+              margin: '0 0 18px 0',
+              color: '#614700',
+              fontSize: 16,
+              fontWeight: 500
+            }}>
+              <div style={{ marginBottom: 8 }}>
+                <strong>Cash Payment Instructions:</strong>
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                Please pay in person at:<br/>
+                <strong>130 S Franklin Street, Rocky Mount</strong>
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                <strong>Hours:</strong> 11:00 AM to 4:00 PM
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <strong>Note:</strong> Please bring your equipment when you come to pay. If you have any questions, ask at the front desk.
+              </div>
+              <div style={{ marginBottom: 0 }}>
+                <label htmlFor="cash-note" style={{ fontWeight: 600, display: 'block', marginBottom: 4 }}>Leave a note or phone number so we can contact you before you come:</label>
+                <input
+                  id="cash-note"
+                  type="text"
+                  value={cashNote}
+                  onChange={e => setCashNote(e.target.value)}
+                  placeholder="Your note or phone number (optional)"
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    borderRadius: 6,
+                    border: '1px solid #ffe58f',
+                    fontSize: 15,
+                    marginBottom: 0
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <button
+                className="btn-primary"
+                style={{ marginTop: 24, minWidth: 200 }}
+                onClick={handleCashPayment}
+              >
+                Confirm cash payment
+              </button>
+              <button
+                className="btn-secondary"
+                style={{ marginTop: 12, minWidth: 200 }}
+                onClick={handlePaymentCancel}
+              >
+                Cancel
+              </button>
+            </div>
+          </>
         )}
       </div>
     );
@@ -275,39 +342,27 @@ export default function Orders() {
           <>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {cart.map((c, idx) => (
-                <li key={idx} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 0',
-                  borderBottom: idx < cart.length - 1 ? '1px solid #ddd' : 'none'
-                }}>
+                <li
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    padding: '2px 0'
+                  }}
+                >
                   <span>
-                    <strong>{c.item}</strong> — {c.details}
+                    <strong>{c.item}</strong>
+                    {c.details && String(c.details).trim() !== '' && (
+                      <span style={{ color: '#888', marginLeft: 6 }}>— {c.details}</span>
+                    )}
                   </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontWeight: 'bold', color: '#667eea' }}>
-                      ${c.price || 0}
+                  {c.price && (
+                    <span style={{ color: '#667eea', fontWeight: 'bold' }}>
+                      ${c.price}
                     </span>
-                    <button
-                      onClick={() => handleRemoveFromCart(idx)}
-                      style={{
-                        background: '#e53e3e',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: 6,
-                        padding: '6px 16px',
-                        fontWeight: 'bold',
-                        fontSize: 15,
-                        cursor: 'pointer',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                        transition: 'background 0.2s',
-                      }}
-                      title="Remove from cart"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -350,31 +405,64 @@ export default function Orders() {
       ) : (
         <ul className="orders-list">
           {orders.map(o => (
-            <li key={o._id} className="order-item">
-              <div className="order-main">
-                <div className="order-info">
+            <li key={o._id} className="order-item" style={{ width: '100%', display: 'flex', alignItems: 'flex-start' }}>
+              <div className="order-main" style={{ width: '100%' }}>
+                <div className="order-info" style={{ width: '100%', textAlign: 'left' }}>
                   <strong>Order Items:</strong>
                   <ul style={{ margin: '8px 0 8px 0', paddingLeft: 18 }}>
                     {o.items && o.items.map((prod, idx) => (
-                      <li key={idx}>
-                        <strong>{prod.item}</strong> — {prod.details}
-                        {prod.price && <span style={{ color: '#667eea', fontWeight: 'bold' }}> - ${prod.price}</span>}
+                      <li
+                        key={idx}
+                        style={{
+                          padding: '8px 0',
+                          borderBottom: idx < o.items.length - 1 ? '1px solid #ddd' : 'none'
+                        }}
+                      >
+                        <strong>{prod.item}</strong>
+                        {prod.details && String(prod.details).trim() !== '' && (
+                          <span style={{ color: '#888', marginLeft: 6 }}>— {prod.details}</span>
+                        )}
+                        {prod.price && (
+                          <span style={{ color: '#667eea', fontWeight: 'bold', marginLeft: 6 }}>
+                            ${prod.price}
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ul>
+                  {/* Show note if present */}
+                  {o.note && o.note.trim() !== '' && (
+                    <div style={{
+                      margin: '8px 0',
+                      padding: '8px',
+                      background: '#fffbe6',
+                      border: '1px solid #ffe58f',
+                      borderRadius: 6,
+                      color: '#614700',
+                      fontSize: 15,
+                      whiteSpace: 'pre-line',
+                      maxWidth: '100%',
+                      boxSizing: 'border-box',
+                    }}>
+                      <div style={{ fontWeight: 700, marginBottom: 2 }}>Note:</div>
+                      <div className="order-note-value" style={{ marginLeft: 0 }}>
+                        {o.note}
+                      </div>
+                    </div>
+                  )}
                   {o.totalAmount && (
                     <div style={{ margin: '8px 0', padding: '8px', background: '#f0f8ff', borderRadius: 4 }}>
                       <strong>Total: ${o.totalAmount}</strong>
-                      <span style={{ 
-                        marginLeft: 12, 
-                        padding: '4px 8px', 
-                        borderRadius: 4, 
+                      <span style={{
+                        marginLeft: 12,
+                        padding: '4px 8px',
+                        borderRadius: 4,
                         fontSize: 12,
                         fontWeight: 'bold',
                         background: o.paymentStatus === 'paid' ? '#48bb78' : '#ed8936',
                         color: 'white'
                       }}>
-                        {o.paymentStatus === 'paid' ? 'PAID' : 'PENDING PAYMENT'}
+                        {o.paymentStatus === 'paid' ? 'ORDER PLACED' : 'PENDING PAYMENT'}
                       </span>
                     </div>
                   )}
@@ -395,27 +483,44 @@ export default function Orders() {
                   </span>
                   <br />
                   <span className="status-label">Status: {o.status}</span>
-                  
                   {/* Payment button for unpaid orders */}
                   {o.paymentStatus !== 'paid' && o.totalAmount > 0 && (
-                    <button
-                      onClick={() => {
-                        setSelectedOrder(o);
-                        setShowPayment(true);
-                      }}
-                      style={{
-                        marginTop: 8,
-                        background: '#48bb78',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: 6,
-                        padding: '8px 16px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Pay Now
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(o);
+                          setShowPayment(true);
+                        }}
+                        style={{
+                          marginTop: 8,
+                          background: '#48bb78',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '8px 16px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          marginRight: 8
+                        }}
+                      >
+                        Pay Now
+                      </button>
+                      <button
+                        onClick={() => handleCancelOrder(o._id)}
+                        style={{
+                          marginTop: 8,
+                          background: '#e53e3e',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 6,
+                          padding: '8px 16px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Cancel Order
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

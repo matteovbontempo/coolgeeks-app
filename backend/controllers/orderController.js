@@ -138,12 +138,13 @@ async function updateOrderStatus(req, res) {
 
 // — Mark order as cash payment
 async function payCash(req, res) {
-  const { orderId } = req.body;
+  const { orderId, note } = req.body;
   const order = await Order.findById(orderId);
   if (!order) return res.status(404).json({ message: 'Order not found' });
 
   order.paymentMethod = 'cash';
   order.paymentStatus = 'cash_pending';
+  if (typeof note === 'string') order.note = note;
   await order.save();
 
   res.json({ message: 'Order marked for cash payment' });

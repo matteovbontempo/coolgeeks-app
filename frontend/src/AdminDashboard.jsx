@@ -12,6 +12,8 @@ export default function AdminDashboard() {
   const [adminActionError, setAdminActionError] = useState('');
   const [orderDateFilter, setOrderDateFilter] = useState('all');
   const [apptDateFilter, setApptDateFilter] = useState('all');
+  const [hoveredNote, setHoveredNote] = useState(null);
+  const [modalNote, setModalNote] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -196,6 +198,7 @@ export default function AdminDashboard() {
                 <th>User (Name / Email)</th>
                 <th>Item</th>
                 <th>Details</th>
+                <th style={{ maxWidth: 250, minWidth: 120 }}>Note</th>
                 <th>Tracking #</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -209,9 +212,40 @@ export default function AdminDashboard() {
                   <td>{o.userId ? `${o.userId.name} / ${o.userId.email}` : '—'}</td>
                   <td>{o.item}</td>
                   <td>{o.details}</td>
+                  <td
+                    style={{
+                      maxWidth: 250,
+                      minWidth: 120,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      position: 'relative',
+                      padding: '4px 8px',
+                      verticalAlign: 'middle'
+                    }}
+                  >
+                    {o.note && o.note.length > 0 ? (
+                      <>
+                        {o.note.length > 30 ? (
+                          <>
+                            {o.note.slice(0, 30)}…
+                            <span
+                              style={{ cursor: 'pointer', marginLeft: 8, color: '#667eea', fontSize: 18 }}
+                              title="Ver nota completa"
+                              onClick={() => setModalNote(o.note)}
+                            >
+                              👁️
+                            </span>
+                          </>
+                        ) : (
+                          o.note
+                        )}
+                      </>
+                    ) : '—'}
+                  </td>
                   <td>{o.trackingNumber}</td>
                   <td>{o.status}</td>
-                  <td>
+                  <td style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 160 }}>
                     <select
                       value={o.status}
                       onChange={e => updateOrderStatus(o._id, e.target.value)}
@@ -222,7 +256,7 @@ export default function AdminDashboard() {
                       <option value="Cancelled">Cancelled</option>
                     </select>
                     <button
-                      style={{ marginLeft: 8, color: '#fff', background: '#e53e3e', border: 'none', borderRadius: 4, padding: '0.3rem 0.7rem', cursor: 'pointer' }}
+                      style={{ color: '#fff', background: '#e53e3e', border: 'none', borderRadius: 4, padding: '0.3rem 0.7rem', cursor: 'pointer', minWidth: 60 }}
                       onClick={() => deleteOrder(o._id)}
                       title="Delete order"
                     >
@@ -301,6 +335,60 @@ export default function AdminDashboard() {
           </table>
         </div>
       </section>
+
+      {/* Modal for full note */}
+      {modalNote && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.35)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+          onClick={() => setModalNote(null)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: '32px 28px',
+              minWidth: 320,
+              maxWidth: 500,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+              position: 'relative',
+              fontSize: 17,
+              color: '#222',
+              wordBreak: 'break-word',
+              whiteSpace: 'pre-line'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setModalNote(null)}
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 14,
+                background: 'none',
+                border: 'none',
+                fontSize: 22,
+                color: '#888',
+                cursor: 'pointer'
+              }}
+              title="Cerrar"
+            >
+              ×
+            </button>
+            <div style={{ marginBottom: 12, fontWeight: 600, fontSize: 18 }}>Full Note</div>
+            <div>{modalNote}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

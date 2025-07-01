@@ -345,4 +345,9 @@
   border-color: #667eea;
 }
 
+.order-note-value {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
 
