@@ -32,13 +32,6 @@ export default function Appointments() {
   const [apptHour, setApptHour] = useState('11');
   const [apptMinute, setApptMinute] = useState('00');
 
-  // Pull to refresh
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const containerRef = useRef(null);
-  const startY = useRef(0);
-  const currentY = useRef(0);
-
   // Min para datetime-local en **hora local**
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -101,49 +94,6 @@ export default function Appointments() {
       isMounted = false;
     };
   }, []);
-
-  // Pull to refresh handlers
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleTouchStart = (e) => {
-      if (container.scrollTop === 0) {
-        startY.current = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      if (container.scrollTop === 0) {
-        currentY.current = e.touches[0].clientY;
-        const distance = Math.max(0, currentY.current - startY.current);
-        
-        if (distance > 0) {
-          e.preventDefault();
-          setPullDistance(Math.min(distance * 0.5, 100));
-        }
-      }
-    };
-
-    const handleTouchEnd = async () => {
-      if (pullDistance > 50) {
-        setIsRefreshing(true);
-        await fetchAppointments();
-        setIsRefreshing(false);
-      }
-      setPullDistance(0);
-    };
-
-    container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [pullDistance]);
 
   async function fetchAppointments() {
     setLoadingList(true);
@@ -308,24 +258,7 @@ export default function Appointments() {
   }
 
   return (
-    <div className="appointments-card" ref={containerRef}>
-      {/* Pull to refresh indicator */}
-      {pullDistance > 0 && (
-        <div 
-          className="pull-refresh-indicator"
-          style={{ 
-            transform: `translateY(${pullDistance}px)`,
-            opacity: pullDistance / 100
-          }}
-        >
-          {isRefreshing ? (
-            <span>🔄 Refreshing...</span>
-          ) : (
-            <span>⬇️ Pull to refresh</span>
-          )}
-        </div>
-      )}
-
+    <div className="orders-card appointments-card">
       <h2>Your Appointments</h2>
 
       <form className="appointments-form" onSubmit={handleSubmit}>
@@ -395,6 +328,9 @@ export default function Appointments() {
         <p className="appointments-error">{errorList}</p>
       ) : (
         <ul className="appointments-list">
+          {appointments.length === 0 && (
+            <li style={{ color: '#888', textAlign: 'center', padding: '2rem 0' }}>No appointments found.</li>
+          )}
           {appointments.map(appt => (
             <li key={appt._id} className={`appointment-item status-${appt.status}`}>
               {editingId === appt._id ? (

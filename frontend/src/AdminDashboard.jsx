@@ -231,7 +231,7 @@ export default function AdminDashboard() {
                             {o.note.slice(0, 30)}…
                             <span
                               style={{ cursor: 'pointer', marginLeft: 8, color: '#667eea', fontSize: 18 }}
-                              title="Ver nota completa"
+                              title="View full note"
                               onClick={() => setModalNote(o.note)}
                             >
                               👁️
