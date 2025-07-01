@@ -16,6 +16,7 @@ const appointmentsRoutes      = require('./routes/appointmentsRoutes');
 const trackingRoutes          = require('./routes/trackingRoutes');
 const adminOrdersRoutes       = require('./routes/adminOrdersRoutes');
 const adminAppointmentsRoutes = require('./routes/adminAppointmentsRoutes');
+const paymentRoutes           = require('./routes/paymentRoutes');
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/appointments', appointmentsRoutes);
 app.use('/api/tracking', trackingRoutes);
 app.use('/api/admin/orders', adminOrdersRoutes);
 app.use('/api/admin/appointments', adminAppointmentsRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // --- Global error handler ---
 app.use((err, req, res, next) => {

@@ -3,26 +3,52 @@ const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
   userId: {
-    type:     mongoose.Schema.Types.ObjectId,
-    ref:      'User',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
-  item: {
-    type:     String,
+  items: [{
+    item: {
+      type: String,
+      required: true
+    },
+    details: {
+      type: String,
+      required: true
+    },
+    price: {
+      type: Number,
+      required: true,
+      default: 0
+    }
+  }],
+  totalAmount: {
+    type: Number,
     required: true
   },
-  details: {
-    type:     String,
-    required: true
+  currency: {
+    type: String,
+    default: 'usd'
   },
+  paymentMethod: {
+    type: String,
+    enum: ['card', 'cash'],
+    default: 'card'
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'cash_pending'],
+    default: 'pending'
+  },
+  stripePaymentIntentId: String,
   trackingNumber: {
-    type:     String,
-    required: true,
-    unique:   true
+    type: String,
+    unique: true,
+    sparse: true
   },
   status: {
-    type:    String,
-    enum:    ['Pending', 'Shipped', 'Delivered', 'Ready for Pickup', 'Completed', 'Cancelled'],
+    type: String,
+    enum: ['Pending', 'Shipped', 'Delivered', 'Ready for Pickup', 'Completed', 'Cancelled'],
     default: 'Pending'
   }
 }, {

@@ -4,6 +4,15 @@ const { customAlphabet } = require('nanoid');
 // generate 8 uppercase alphanumerics
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8);
 
+// Service pricing
+const SERVICE_PRICES = {
+  'Screen Repair': 150,
+  'RAM Upgrade': 80,
+  'Virus/Malware Removal': 60,
+  'New Computer Install': 100,
+  'Other': 50
+};
+
 // — List all orders (admin)
 async function listOrders(req, res) {
   try {
@@ -17,7 +26,7 @@ async function listOrders(req, res) {
   }
 }
 
-// — List only the current user’s orders
+// — List only the current user's orders
 async function listUserOrders(req, res) {
   try {
     const orders = await Order.find({ userId: req.userId })
@@ -32,24 +41,48 @@ async function listUserOrders(req, res) {
 // — Create a new order
 async function createOrder(req, res) {
   try {
-    const { item, details } = req.body;
-    if (!item || !details) {
-      return res.status(400).json({ message: 'Item and details are required.' });
+    const { items } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Items array is required.' });
     }
+    
+    // Validate items and add pricing
+    const itemsWithPricing = items.map(item => {
+      if (!item.item || !item.details) {
+        throw new Error('Each item must have item and details.');
+      }
+      
+      const price = SERVICE_PRICES[item.item] || SERVICE_PRICES['Other'];
+      return {
+        ...item,
+        price
+      };
+    });
 
+    // Calculate total amount
+    const totalAmount = itemsWithPricing.reduce((sum, item) => sum + item.price, 0);
+    
     const trackingNumber = nanoid();
     const order = await Order.create({
       userId: req.userId,
-      item,
-      details,
+      items: itemsWithPricing,
+      totalAmount,
       trackingNumber
     });
-
-    // returns { ..., trackingNumber: "A1B2C3D4", ... }
     res.status(201).json(order);
   } catch (err) {
     console.error('createOrder error:', err);
     res.status(500).json({ message: 'Could not create order.' });
+  }
+}
+
+// — Get service pricing
+async function getServicePricing(req, res) {
+  try {
+    res.json(SERVICE_PRICES);
+  } catch (err) {
+    console.error('getServicePricing error:', err);
+    res.status(500).json({ message: 'Could not fetch pricing.' });
   }
 }
 
@@ -103,11 +136,26 @@ async function updateOrderStatus(req, res) {
   }
 }
 
+// — Mark order as cash payment
+async function payCash(req, res) {
+  const { orderId } = req.body;
+  const order = await Order.findById(orderId);
+  if (!order) return res.status(404).json({ message: 'Order not found' });
+
+  order.paymentMethod = 'cash';
+  order.paymentStatus = 'cash_pending';
+  await order.save();
+
+  res.json({ message: 'Order marked for cash payment' });
+}
+
 module.exports = {
   listOrders,
   listUserOrders,
   createOrder,
+  getServicePricing,
   updateOrder,
   deleteOrder,
-  updateOrderStatus
+  updateOrderStatus,
+  payCash
 };

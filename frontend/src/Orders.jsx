@@ -1,8 +1,14 @@
 // frontend/src/Orders.jsx
 import React, { useState, useEffect } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import PaymentForm from './PaymentForm';
 import './Orders.css';
+
+// Initialize Stripe (Vite env)
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
 
 export default function Orders() {
   const [item, setItem]               = useState('RAM Upgrade');
@@ -16,9 +22,14 @@ export default function Orders() {
 
   // Carrito
   const [cart, setCart] = useState([]);
+  const [pricing, setPricing] = useState({});
+  const [showPayment, setShowPayment] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('card');
 
   useEffect(() => {
     fetchOrders();
+    fetchPricing();
   }, []);
 
   useEffect(() => {
@@ -46,6 +57,15 @@ export default function Orders() {
     }
   }
 
+  async function fetchPricing() {
+    try {
+      const res = await axios.get('/api/orders/pricing');
+      setPricing(res.data);
+    } catch (err) {
+      console.error('Error fetching pricing:', err);
+    }
+  }
+
   async function copyToClipboard(text) {
     try {
       await navigator.clipboard.writeText(text);
@@ -68,12 +88,17 @@ export default function Orders() {
       toast.error('Please enter order details.');
       return;
     }
-    setCart([...cart, { item, details }]);
+    const price = pricing[item] || pricing['Other'] || 0;
+    setCart([...cart, { item, details, price }]);
     setDetails('');
   }
 
   function handleRemoveFromCart(idx) {
     setCart(cart.filter((_, i) => i !== idx));
+  }
+
+  function calculateTotal() {
+    return cart.reduce((sum, item) => sum + (item.price || 0), 0);
   }
 
   async function handleSubmitCart() {
@@ -85,17 +110,18 @@ export default function Orders() {
     const toastId = toast.loading('Placing your order...');
     try {
       const token = localStorage.getItem('token');
-      // Enviar todos los items del carrito como pedidos individuales
-      for (const c of cart) {
-        await axios.post(
-          '/api/orders',
-          { item: c.item, details: c.details },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      }
-      toast.success('All orders placed!', { id: toastId });
+      const response = await axios.post(
+        '/api/orders',
+        { items: cart },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Order placed!', { id: toastId });
       setCart([]);
       await fetchOrders();
+      
+      // Show payment form for the new order
+      setSelectedOrder(response.data);
+      setShowPayment(true);
     } catch (err) {
       console.error(err);
       const message = err.response?.data?.message || 'Could not place order.';
@@ -105,25 +131,117 @@ export default function Orders() {
     }
   }
 
+  function handlePaymentSuccess(paymentIntent) {
+    setShowPayment(false);
+    setSelectedOrder(null);
+    fetchOrders(); // Refresh orders to show updated payment status
+    toast.success('Payment completed successfully!');
+  }
+
+  function handlePaymentCancel() {
+    setShowPayment(false);
+    setSelectedOrder(null);
+  }
+
+  const handleCashPayment = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        '/api/orders/pay-cash',
+        { orderId: selectedOrder._id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Pedido registrado para pago en efectivo');
+      handlePaymentSuccess();
+    } catch (error) {
+      toast.error('Error al registrar pago en efectivo');
+    }
+  };
+
+  if (showPayment && selectedOrder) {
+    return (
+      <div>
+        <div className="payment-method-selector" style={{ marginBottom: 20, display: 'flex', gap: 16 }}>
+          <button
+            type="button"
+            className={paymentMethod === 'card' ? 'method-btn selected' : 'method-btn'}
+            onClick={() => setPaymentMethod('card')}
+          >
+            Card
+          </button>
+          <button
+            type="button"
+            className={paymentMethod === 'cash' ? 'method-btn selected' : 'method-btn'}
+            onClick={() => setPaymentMethod('cash')}
+          >
+            Cash
+          </button>
+        </div>
+        {paymentMethod === 'card' && (
+          <Elements stripe={stripePromise}>
+            <PaymentForm
+              order={selectedOrder}
+              onPaymentSuccess={handlePaymentSuccess}
+              onCancel={handlePaymentCancel}
+            />
+          </Elements>
+        )}
+        {paymentMethod === 'cash' && (
+          <div style={{ textAlign: 'center' }}>
+            <button
+              className="btn-primary"
+              style={{ marginTop: 24, minWidth: 200 }}
+              onClick={handleCashPayment}
+            >
+              Confirm cash payment
+            </button>
+            <button
+              className="btn-secondary"
+              style={{ marginTop: 12, minWidth: 200 }}
+              onClick={handlePaymentCancel}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="orders-card">
+      {/* Cart icon with counter */}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{ fontSize: 28, marginRight: 8 }}>🛒</span>
+        <span style={{
+          background: '#667eea',
+          color: 'white',
+          borderRadius: '50%',
+          padding: '4px 10px',
+          fontWeight: 'bold',
+          fontSize: 16,
+          minWidth: 28,
+          textAlign: 'center'
+        }}>
+          {cart.length}
+        </span>
+      </div>
       <h2>Your Orders</h2>
-
       <form className="orders-form" onSubmit={handleAddToCart}>
         <select
           value={item}
           onChange={e => setItem(e.target.value)}
           disabled={loadingCreate}
         >
-          <option value="Screen Repair">Screen Repair</option>
-          <option value="RAM Upgrade">RAM Upgrade</option>
+          <option value="Screen Repair">Screen Repair - ${pricing['Screen Repair'] || 0}</option>
+          <option value="RAM Upgrade">RAM Upgrade - ${pricing['RAM Upgrade'] || 0}</option>
           <option value="Virus/Malware Removal">
-            Virus / Malware Removal
+            Virus / Malware Removal - ${pricing['Virus/Malware Removal'] || 0}
           </option>
           <option value="New Computer Install">
-            New Computer Installation
+            New Computer Installation - ${pricing['New Computer Install'] || 0}
           </option>
-          <option value="Other">Other Service</option>
+          <option value="Other">Other Service - ${pricing['Other'] || 0}</option>
         </select>
 
         <input
@@ -143,35 +261,84 @@ export default function Orders() {
         </button>
       </form>
 
-      {/* Carrito */}
-      {cart.length > 0 && (
-        <div className="cart-section">
-          <h3>Your Cart</h3>
-          <ul className="cart-list">
-            {cart.map((c, idx) => (
-              <li key={idx} className="cart-item">
-                <span><strong>{c.item}</strong> — {c.details}</span>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => handleRemoveFromCart(idx)}
-                  style={{ marginLeft: 8 }}
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-          <button
-            className="btn-primary"
-            onClick={handleSubmitCart}
-            disabled={loadingCreate}
-            style={{ marginTop: 8 }}
-          >
-            Confirm Order ({cart.length})
-          </button>
-        </div>
-      )}
+      {/* Improved Cart Section */}
+      <div style={{
+        background: '#f5f5f5',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16
+      }}>
+        <h3 style={{ margin: 0, marginBottom: 8 }}>Your Cart</h3>
+        {cart.length === 0 ? (
+          <p style={{ color: '#888' }}>Cart is empty.</p>
+        ) : (
+          <>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {cart.map((c, idx) => (
+                <li key={idx} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 0',
+                  borderBottom: idx < cart.length - 1 ? '1px solid #ddd' : 'none'
+                }}>
+                  <span>
+                    <strong>{c.item}</strong> — {c.details}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#667eea' }}>
+                      ${c.price || 0}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveFromCart(idx)}
+                      style={{
+                        background: '#e53e3e',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        padding: '6px 16px',
+                        fontWeight: 'bold',
+                        fontSize: 15,
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                        transition: 'background 0.2s',
+                      }}
+                      title="Remove from cart"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: '2px solid #ddd',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <strong style={{ fontSize: 18 }}>Total: ${calculateTotal()}</strong>
+              <button
+                onClick={handleSubmitCart}
+                style={{
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '12px 24px',
+                  fontWeight: 'bold',
+                  fontSize: 16,
+                  cursor: 'pointer'
+                }}
+              >
+                Place Order & Pay
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       {loadingList ? (
         <div className="loading-container">
@@ -186,8 +353,31 @@ export default function Orders() {
             <li key={o._id} className="order-item">
               <div className="order-main">
                 <div className="order-info">
-                  <strong>{o.item}</strong> — {o.details}
-                  <br />
+                  <strong>Order Items:</strong>
+                  <ul style={{ margin: '8px 0 8px 0', paddingLeft: 18 }}>
+                    {o.items && o.items.map((prod, idx) => (
+                      <li key={idx}>
+                        <strong>{prod.item}</strong> — {prod.details}
+                        {prod.price && <span style={{ color: '#667eea', fontWeight: 'bold' }}> - ${prod.price}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                  {o.totalAmount && (
+                    <div style={{ margin: '8px 0', padding: '8px', background: '#f0f8ff', borderRadius: 4 }}>
+                      <strong>Total: ${o.totalAmount}</strong>
+                      <span style={{ 
+                        marginLeft: 12, 
+                        padding: '4px 8px', 
+                        borderRadius: 4, 
+                        fontSize: 12,
+                        fontWeight: 'bold',
+                        background: o.paymentStatus === 'paid' ? '#48bb78' : '#ed8936',
+                        color: 'white'
+                      }}>
+                        {o.paymentStatus === 'paid' ? 'PAID' : 'PENDING PAYMENT'}
+                      </span>
+                    </div>
+                  )}
                   <div className="tracking-section">
                     <small>Tracking #: {o.trackingNumber}</small>
                     <button
@@ -205,6 +395,28 @@ export default function Orders() {
                   </span>
                   <br />
                   <span className="status-label">Status: {o.status}</span>
+                  
+                  {/* Payment button for unpaid orders */}
+                  {o.paymentStatus !== 'paid' && o.totalAmount > 0 && (
+                    <button
+                      onClick={() => {
+                        setSelectedOrder(o);
+                        setShowPayment(true);
+                      }}
+                      style={{
+                        marginTop: 8,
+                        background: '#48bb78',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        padding: '8px 16px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Pay Now
+                    </button>
+                  )}
                 </div>
               </div>
             </li>

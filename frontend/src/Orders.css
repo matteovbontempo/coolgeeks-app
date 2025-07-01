@@ -326,3 +326,23 @@
     height: 28px;
   }
 }
+
+.method-btn {
+  background: #f7fafc;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.method-btn.selected {
+  background: #667eea;
+  color: #fff;
+  border-color: #667eea;
+}
+
+

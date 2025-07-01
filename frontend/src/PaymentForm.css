@@ -1,0 +1,209 @@
+.payment-form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.payment-header {
+  margin-bottom: 24px;
+}
+
+.payment-header h2 {
+  margin: 20px 0;
+  color: #2d3748;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.order-summary {
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.order-summary h3,
+.order-summary .order-items,
+.order-summary .order-total {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.order-items {
+  margin-bottom: 12px;
+}
+
+.order-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.item-name, .item-price {
+  text-align: center;
+}
+
+.order-total {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card-element-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-element-container label {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 14px;
+}
+
+.card-element-container .StripeElement {
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.card-element-container .StripeElement--focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.card-element-container .StripeElement--invalid {
+  border-color: #e53e3e;
+}
+
+.payment-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  min-width: 120px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5a67d8;
+}
+
+.btn-primary:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #e53e3e;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  min-width: 120px;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #c53030;
+}
+
+.btn-secondary:disabled {
+  background: #f7fafc;
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.card-element-row {
+  display: flex;
+  gap: 16px;
+}
+
+/* Make cardholder name input match StripeElement fields */
+.card-element-container input[type="text"] {
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  transition: border-color 0.2s ease;
+  font-size: 16px;
+  color: #424770;
+}
+
+.card-element-container input[type="text"]:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+.card-element-container input[type="text"].invalid {
+  border-color: #e53e3e;
+}
+
+/* Add margin above CVC label */
+#card-cvc ~ label,
+.card-element-container label[for="card-cvc"] {
+  margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+  .payment-form-container {
+    margin: 0 16px;
+    padding: 16px;
+  }
+  
+  .payment-actions {
+    flex-direction: column;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
+
+  .card-element-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  .card-element-container label[for="card-cvc"] {
+    margin-top: 16px;
+  }
+
+  .order-summary {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+} 
