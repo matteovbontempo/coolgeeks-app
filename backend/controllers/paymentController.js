@@ -1,5 +1,6 @@
 const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 const Order = require('../models/Order');
+const sendEmail = require('../utils/sendEmail');
 
 // Create payment intent
 exports.createPaymentIntent = async (req, res) => {
@@ -108,14 +109,25 @@ exports.handleWebhook = async (req, res) => {
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        const order = await Order.findOne({ 
+        let order = await Order.findOne({ 
           stripePaymentIntentId: paymentIntent.id 
-        });
-        
+        }).populate('userId');
         if (order) {
           order.paymentStatus = 'paid';
           await order.save();
           console.log(`Order ${order._id} payment confirmed via webhook`);
+          // Log before sending email
+          console.log('About to send email to:', order.userId && order.userId.email);
+          if (order.userId && order.userId.email) {
+            await sendEmail({
+              email: order.userId.email,
+              subject: 'Your order has been paid!',
+              text: `Thank you for your payment. Your order ${order._id} is confirmed and being processed.`,
+              html: `<p>Thank you for your payment. Your order <b>${order._id}</b> is confirmed and being processed.</p>`
+            });
+            // Log after sending email
+            console.log('Order payment email sent to:', order.userId.email);
+          }
         }
         break;
 

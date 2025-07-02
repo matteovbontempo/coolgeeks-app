@@ -114,7 +114,6 @@ export default function Orders() {
       return;
     }
     setLoadingCreate(true);
-    const toastId = toast.loading('Placing your order...');
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
@@ -122,17 +121,15 @@ export default function Orders() {
         { items: cart },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Order placed!', { id: toastId });
       setCart([]);
       await fetchOrders();
-      
       // Show payment form for the new order
       setSelectedOrder(response.data);
       setShowPayment(true);
     } catch (err) {
       console.error(err);
       const message = err.response?.data?.message || 'Could not place order.';
-      toast.error(message, { id: toastId });
+      toast.error(message);
     } finally {
       setLoadingCreate(false);
     }
@@ -142,7 +139,7 @@ export default function Orders() {
     setShowPayment(false);
     setSelectedOrder(null);
     fetchOrders(); // Refresh orders to show updated payment status
-    toast.success('Payment completed successfully!');
+    toast.success('Order placed!');
   }
 
   function handlePaymentCancel() {

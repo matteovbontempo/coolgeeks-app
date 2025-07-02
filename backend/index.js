@@ -36,7 +36,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // --- Body parser ---
-app.use(express.json());
+// app.use(express.json()); // REMOVE this line
 
 // --- MongoDB Connection ---
 mongoose.connect(process.env.MONGO_URI, {
@@ -50,12 +50,12 @@ mongoose.connect(process.env.MONGO_URI, {
 });
 
 // --- Routes ---
-app.use('/api/auth', authRoutes);
-app.use('/api/orders', ordersRoutes);
-app.use('/api/appointments', appointmentsRoutes);
-app.use('/api/tracking', trackingRoutes);
-app.use('/api/admin/orders', adminOrdersRoutes);
-app.use('/api/admin/appointments', adminAppointmentsRoutes);
+app.use('/api/auth', express.json(), authRoutes);
+app.use('/api/orders', express.json(), ordersRoutes);
+app.use('/api/appointments', express.json(), appointmentsRoutes);
+app.use('/api/tracking', express.json(), trackingRoutes);
+app.use('/api/admin/orders', express.json(), adminOrdersRoutes);
+app.use('/api/admin/appointments', express.json(), adminAppointmentsRoutes);
 app.use('/api/payments', paymentRoutes);
 
 // --- Global error handler ---
